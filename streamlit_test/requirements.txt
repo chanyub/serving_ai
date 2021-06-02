@@ -1,3 +1,4 @@
 streamlit==0.82.0
+python==3.7.7
 pip==20.0.2
 pytorch==1.4.0
