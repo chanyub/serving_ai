@@ -7,3 +7,4 @@ pyyaml==5.3.1
 psutil==5.7.0
 editdistance==0.5.3
 opencv-python==3.4.4.19
+libglib==2.0
