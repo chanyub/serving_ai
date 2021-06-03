@@ -51,7 +51,9 @@ if uploaded_file is not None:
     label = predict(image)
     # st.write('%s (%.2f%%)' % (label[1], label[2]*100))
     # st.write(label)
-    st.markdown('$'+label+'$')
+    st.image(label)
+    st.write(label)
+    # st.markdown('$'+label+'$')
     # latex_to_img(label)
 
 
