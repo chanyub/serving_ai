@@ -9,7 +9,7 @@ def predict(image1):
     with open("./streamlit_test/data/images/image.pkl","wb") as fw:
         pickle.dump(image1,fw)
     # cv2.imwrite('./streamlit_test/data/images/train_00000.jpg',image1) # must change
-    test = "python inference.py"
+    test = "python streamlit_test/inference.py"
     os.system(test)
     f = open('./streamlit_test/submit/output.csv', 'r') # must change
     test = f.read()
