@@ -48,11 +48,11 @@ if uploaded_file is not None:
     st.image(image, caption='Uploaded Image.', use_column_width=True)
     st.write("Classifying...")
     # label = predict(uploaded_file)
-    pwd, label = predict(image)
+    label = predict(image)
     # st.write('%s (%.2f%%)' % (label[1], label[2]*100))
     # st.write(label)
-    st.write(pwd)
-    st.markdown('$'+label+'$')
+    st.write(label)
+    # st.markdown('$'+label+'$')
     # latex_to_img(label)
 
 

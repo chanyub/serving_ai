@@ -12,4 +12,5 @@ def predict(image1):
     test = f.read()
     file_name = test.split('\t')[0]
     latex_info = test.split('\t')[1:]
-    return os.getcwd(), latex_info[0]
+    # return latex_info[0]
+    return os.getcwd()
