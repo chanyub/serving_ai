@@ -5,7 +5,6 @@ import torch
 from PIL import Image, ImageOps
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
-import pickle
 
 START = "<SOS>"
 END = "<EOS>"
@@ -202,10 +201,7 @@ class LoadEvalDataset(Dataset):
 
     def __getitem__(self, i):
         item = self.data[i]
-        # image = Image.open(item["path"])
-        with open("./streamlit_test/data/images/image.pkl","rb") as fr:
-            data = pickle.load(fr)
-            image = Image.fromarray(data)
+        image = Image.open(item["path"])
         if self.rgb == 3:
             image = image.convert("RGB")
         elif self.rgb == 1:
