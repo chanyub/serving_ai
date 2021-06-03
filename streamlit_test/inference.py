@@ -100,7 +100,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--checkpoint",
         dest="checkpoint",
-        default="./log/attention_50/checkpoints/0050.pth", # must change
+        default="./streamlit_test/log/attention_50/checkpoints/0050.pth", # must change
         type=str,
         help="Path of checkpoint file",
     )
@@ -119,7 +119,7 @@ if __name__ == "__main__":
         help="batch size when doing inference",
     )
 
-    eval_dir = os.environ.get('SM_CHANNEL_EVAL', './data') # must change
+    eval_dir = os.environ.get('SM_CHANNEL_EVAL', './streamlit_test/data') # must change
     file_path = os.path.join(eval_dir, 'input.txt')
     parser.add_argument(
         "--file_path",
@@ -129,7 +129,7 @@ if __name__ == "__main__":
         help="file path when doing inference",
     )
 
-    output_dir = os.environ.get('SM_OUTPUT_DATA_DIR', './submit') # must change
+    output_dir = os.environ.get('SM_OUTPUT_DATA_DIR', './streamlit_test/submit') # must change
     parser.add_argument(
         "--output_dir",
         dest="output_dir",
