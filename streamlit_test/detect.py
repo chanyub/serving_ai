@@ -10,7 +10,6 @@ def predict(image1):
     os.system(test)
     f = open('./submit/output.csv', 'r') # must change
     test = f.read()
-    print(os.getcwd())
     file_name = test.split('\t')[0]
     latex_info = test.split('\t')[1:]
-    return latex_info[0]
+    return os.getcwd(), latex_info[0]
