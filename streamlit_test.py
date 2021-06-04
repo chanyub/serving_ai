@@ -1,18 +1,18 @@
 import streamlit as st
-# import pandas as pd
-# import numpy as np
-# import os
+import pandas as pd
+import numpy as np
+import os
 from PIL import Image
 from detect import predict
-# from matplotlib import pyplot as plt
-# from inference import main
-	
+from matplotlib import pyplot as plt
+from inference import main
+
 st.title('OCR_prototype')
-	
+
 DATE_COLUMN = 'date/time'
 DATA_URL = ('https://s3-us-west-2.amazonaws.com/'
               'streamlit-demo-data/uber-raw-data-sep14.csv.gz')
-	
+
 # @st.cache
 # def load_data(nrows):
 # 	data = pd.read_csv(DATA_URL, nrows=nrows)
@@ -47,7 +47,6 @@ if uploaded_file is not None:
     image = Image.open(uploaded_file)
     st.image(image, caption='Uploaded Image.', use_column_width=True)
     st.write("Classifying...")
-    # st.write(os.getcwd())
     # label = predict(uploaded_file)
     label = predict(image)
     # st.write('%s (%.2f%%)' % (label[1], label[2]*100))
