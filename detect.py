@@ -6,9 +6,9 @@ import pandas as pd
 def predict(image1):
     # image1 = np.array(image1)
     # cv2.imwrite('data/images/train_00000.jpg',image1) # must change
-    test = "python streamlit_test/inference.py"
+    test = "python inference.py"
     os.system(test)
-    f = open('streamlit_test/submit/output.csv', 'r') # must change
+    f = open('submit/output.csv', 'r') # must change
     test = f.read()
     file_name = test.split('\t')[0]
     latex_info = test.split('\t')[1:]
