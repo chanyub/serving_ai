@@ -6,7 +6,7 @@ import pandas as pd
 def predict(image1):
     image1 = np.array(image1)
     cv2.imwrite('./streatmlit_test/data/images/train_00000.jpg',image1) # must change
-    test = "python ./streamlit_test/inference.py"
+    test = "python inference.py"
     os.system(test)
     f = open('./streamlit_test/submit/output.csv', 'r') # must change
     test = f.read()
