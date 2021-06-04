@@ -1,3 +1,4 @@
+import torch
 import os
 from train import id_to_string
 from metrics import word_error_rate, sentence_acc
@@ -11,7 +12,7 @@ from torch.utils.data import DataLoader
 import argparse
 import random
 from tqdm import tqdm
-import torch
+
 
 def main(parser):
     is_cuda = torch.cuda.is_available()
