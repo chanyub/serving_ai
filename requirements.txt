@@ -6,4 +6,4 @@ psutil==5.7.0
 editdistance==0.5.3
 opencv-python--headless
 matplotlib==3.4.2
-numpy
+numpy==1.20.3
