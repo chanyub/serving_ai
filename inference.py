@@ -1,5 +1,5 @@
-import torch
 import os
+import torch
 from train import id_to_string
 from metrics import word_error_rate, sentence_acc
 from checkpoint import load_checkpoint
