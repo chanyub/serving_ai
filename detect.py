@@ -1,4 +1,4 @@
-from inference import main
+# from inference import main
 import os,sys
 import cv2
 import numpy as np
