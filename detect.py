@@ -1,8 +1,8 @@
 # from inference import main
 import os,sys
-import cv2
-import numpy as np
-import pandas as pd
+# import cv2
+# import numpy as np
+# import pandas as pd
 def predict(image1):
     # image1 = np.array(image1)
     # cv2.imwrite('data/images/train_00000.jpg',image1) # must change

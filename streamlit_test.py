@@ -1,11 +1,11 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-import os
+# import pandas as pd
+# import numpy as np
+# import os
 from PIL import Image
 from detect import predict
-from matplotlib import pyplot as plt
-from inference import main
+# from matplotlib import pyplot as plt
+# from inference import main
 	
 st.title('OCR_prototype')
 	
