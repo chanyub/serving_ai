@@ -25,11 +25,11 @@ prefix: "./log/attention_50"
 
 data:
   train:
-    - "/opt/ml/input/data/train_dataset/gt.txt"
+    - "../../train_dataset/gt.txt"
   test:
     - ""
   token_paths:
-    - "/opt/ml/input/data/train_dataset/tokens.txt"  # 241 tokens
+    - "../../train_dataset/tokens.txt"  # 241 tokens
   dataset_proportions:  # proportion of data to take from train (not test)
     - 1.0
   random_split: True # if True, random split from train files
@@ -37,8 +37,8 @@ data:
   crop: True
   rgb: 1    # 3 for color, 1 for greyscale
   
-batch_size: 32
-num_workers: 0
+batch_size: 96
+num_workers: 8
 num_epochs: 50
 print_epochs: 1
 dropout_rate: 0.1

@@ -100,7 +100,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--checkpoint",
         dest="checkpoint",
-        default="./log/attention_50/checkpoints/0050.pth", # must change
+        default="./log/satrn/checkpoints/0015.pth", # must change
         type=str,
         help="Path of checkpoint file",
     )

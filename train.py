@@ -15,24 +15,23 @@ from checkpoint import (
     default_checkpoint,
     load_checkpoint,
     save_checkpoint,
-    # init_tensorboard,
-    # write_tensorboard,
+    init_tensorboard,
+    write_tensorboard,
 )
 from psutil import virtual_memory
-
+import wandb
 from flags import Flags
 from utils import get_network, get_optimizer
-from dataset import dataset_loader, START, PAD, load_vocab
+from dataset import dataset_loader, START, PAD,load_vocab
 from scheduler import CircularLRBeta
 
-from metrics import word_error_rate, sentence_acc
+from metrics import word_error_rate,sentence_acc
 
-
-def id_to_string(tokens, data_loader, do_eval=0):
+def id_to_string(tokens, data_loader,do_eval=0):
     result = []
     if do_eval:
-        special_ids = [data_loader.dataset.token_to_id["<PAD>"], data_loader.dataset.token_to_id["<SOS>"],
-                       data_loader.dataset.token_to_id["<EOS>"]]
+        eos_id = data_loader.dataset.token_to_id["<EOS>"]
+        special_ids = [data_loader.dataset.token_to_id["<PAD>"], data_loader.dataset.token_to_id["<SOS>"], eos_id]
 
     for example in tokens:
         string = ""
@@ -42,6 +41,8 @@ def id_to_string(tokens, data_loader, do_eval=0):
                 if token not in special_ids:
                     if token != -1:
                         string += data_loader.dataset.id_to_token[token] + " "
+                elif token == eos_id:
+                    break
         else:
             for token in example:
                 token = token.item()
@@ -51,18 +52,17 @@ def id_to_string(tokens, data_loader, do_eval=0):
         result.append(string)
     return result
 
-
 def run_epoch(
-        data_loader,
-        model,
-        epoch_text,
-        criterion,
-        optimizer,
-        lr_scheduler,
-        teacher_forcing_ratio,
-        max_grad_norm,
-        device,
-        train=True,
+    data_loader,
+    model,
+    epoch_text,
+    criterion,
+    optimizer,
+    lr_scheduler,
+    teacher_forcing_ratio,
+    max_grad_norm,
+    device,
+    train=True,
 ):
     # Disables autograd during validation mode
     torch.set_grad_enabled(train)
@@ -75,16 +75,16 @@ def run_epoch(
     grad_norms = []
     correct_symbols = 0
     total_symbols = 0
-    wer = 0
-    num_wer = 0
-    sent_acc = 0
-    num_sent_acc = 0
+    wer=0
+    num_wer=0
+    sent_acc=0
+    num_sent_acc=0
 
     with tqdm(
-            desc="{} ({})".format(epoch_text, "Train" if train else "Validation"),
-            total=len(data_loader.dataset),
-            dynamic_ncols=True,
-            leave=False,
+        desc="{} ({})".format(epoch_text, "Train" if train else "Validation"),
+        total=len(data_loader.dataset),
+        dynamic_ncols=True,
+        leave=False,
     ) as pbar:
         for d in data_loader:
             input = d["image"].to(device)
@@ -97,11 +97,11 @@ def run_epoch(
             expected[expected == -1] = data_loader.dataset.token_to_id[PAD]
 
             output = model(input, expected, train, teacher_forcing_ratio)
-
+            
             decoded_values = output.transpose(1, 2)
             _, sequence = torch.topk(decoded_values, 1, dim=1)
             sequence = sequence.squeeze(1)
-
+            
             loss = criterion(decoded_values, expected[:, 1:])
 
             if train:
@@ -123,13 +123,13 @@ def run_epoch(
                 optimizer.step()
 
             losses.append(loss.item())
-
+            
             expected[expected == data_loader.dataset.token_to_id[PAD]] = -1
-            expected_str = id_to_string(expected, data_loader, do_eval=1)
-            sequence_str = id_to_string(sequence, data_loader, do_eval=1)
-            wer += word_error_rate(sequence_str, expected_str)
+            expected_str = id_to_string(expected, data_loader,do_eval=1)
+            sequence_str = id_to_string(sequence, data_loader,do_eval=1)
+            wer += word_error_rate(sequence_str,expected_str)
             num_wer += 1
-            sent_acc += sentence_acc(sequence_str, expected_str)
+            sent_acc += sentence_acc(sequence_str,expected_str)
             num_sent_acc += 1
             correct_symbols += torch.sum(sequence == expected[:, 1:], dim=(0, 1)).item()
             total_symbols += torch.sum(expected[:, 1:] != -1, dim=(0, 1)).item()
@@ -148,9 +148,9 @@ def run_epoch(
         "correct_symbols": correct_symbols,
         "total_symbols": total_symbols,
         "wer": wer,
-        "num_wer": num_wer,
+        "num_wer":num_wer,
         "sent_acc": sent_acc,
-        "num_sent_acc": num_sent_acc
+        "num_sent_acc":num_sent_acc
     }
     if train:
         try:
@@ -166,8 +166,8 @@ def main(config_file):
     Train math formula recognition model
     """
     options = Flags(config_file).get()
-
-    # set random seed
+    teacher_forcing_ratio = options.teacher_forcing_ratio
+    #set random seed
     torch.manual_seed(options.seed)
     np.random.seed(options.seed)
     random.seed(options.seed)
@@ -293,19 +293,19 @@ def main(config_file):
     shutil.copy(config_file, os.path.join(options.prefix, "train_config.yaml"))
     if options.print_epochs is None:
         options.print_epochs = options.num_epochs
-    # writer = init_tensorboard(name=options.prefix.strip("-"))
+    writer = init_tensorboard(name=options.prefix.strip("-"))
     start_epoch = checkpoint["epoch"]
     train_symbol_accuracy = checkpoint["train_symbol_accuracy"]
-    train_sentence_accuracy = checkpoint["train_sentence_accuracy"]
-    train_wer = checkpoint["train_wer"]
+    train_sentence_accuracy=checkpoint["train_sentence_accuracy"]
+    train_wer=checkpoint["train_wer"]
     train_losses = checkpoint["train_losses"]
     validation_symbol_accuracy = checkpoint["validation_symbol_accuracy"]
-    validation_sentence_accuracy = checkpoint["validation_sentence_accuracy"]
-    validation_wer = checkpoint["validation_wer"]
+    validation_sentence_accuracy=checkpoint["validation_sentence_accuracy"]
+    validation_wer=checkpoint["validation_wer"]
     validation_losses = checkpoint["validation_losses"]
     learning_rates = checkpoint["lr"]
     grad_norms = checkpoint["grad_norm"]
-
+    wandb.watch(model)
     # Train
     for epoch in range(options.num_epochs):
         start_time = time.time()
@@ -330,11 +330,14 @@ def main(config_file):
             device,
             train=True,
         )
+        
+
+
 
         train_losses.append(train_result["loss"])
         grad_norms.append(train_result["grad_norm"])
         train_epoch_symbol_accuracy = (
-                train_result["correct_symbols"] / train_result["total_symbols"]
+            train_result["correct_symbols"] / train_result["total_symbols"]
         )
         train_symbol_accuracy.append(train_epoch_symbol_accuracy)
         train_epoch_sentence_accuracy = (
@@ -363,21 +366,21 @@ def main(config_file):
         )
         validation_losses.append(validation_result["loss"])
         validation_epoch_symbol_accuracy = (
-                validation_result["correct_symbols"] / validation_result["total_symbols"]
+            validation_result["correct_symbols"] / validation_result["total_symbols"]
         )
         validation_symbol_accuracy.append(validation_epoch_symbol_accuracy)
 
         validation_epoch_sentence_accuracy = (
-                validation_result["sent_acc"] / validation_result["num_sent_acc"]
+            validation_result["sent_acc"] / validation_result["num_sent_acc"]
         )
         validation_sentence_accuracy.append(validation_epoch_sentence_accuracy)
         validation_epoch_wer = (
                 validation_result["wer"] / validation_result["num_wer"]
         )
         validation_wer.append(validation_epoch_wer)
-
+        teacher_forcing_ratio = teacher_forcing_ratio*0.97
         # Save checkpoint
-        # make config
+        #make config
         with open(config_file, 'r') as f:
             option_dict = yaml.safe_load(f)
 
@@ -387,18 +390,18 @@ def main(config_file):
                 "train_losses": train_losses,
                 "train_symbol_accuracy": train_symbol_accuracy,
                 "train_sentence_accuracy": train_sentence_accuracy,
-                "train_wer": train_wer,
+                "train_wer":train_wer,
                 "validation_losses": validation_losses,
                 "validation_symbol_accuracy": validation_symbol_accuracy,
-                "validation_sentence_accuracy": validation_sentence_accuracy,
-                "validation_wer": validation_wer,
+                "validation_sentence_accuracy":validation_sentence_accuracy,
+                "validation_wer":validation_wer,
                 "lr": learning_rates,
                 "grad_norm": grad_norms,
                 "model": model.state_dict(),
                 "optimizer": optimizer.state_dict(),
                 "configs": option_dict,
-                "token_to_id": train_data_loader.dataset.token_to_id,
-                "id_to_token": train_data_loader.dataset.id_to_token
+                "token_to_id":train_data_loader.dataset.token_to_id,
+                "id_to_token":train_data_loader.dataset.id_to_token
             },
             prefix=options.prefix,
         )
@@ -434,21 +437,30 @@ def main(config_file):
             )
             print(output_string)
             log_file.write(output_string + "\n")
-            # write_tensorboard(
-            #     writer,
-            #     start_epoch + epoch + 1,
-            #     train_result["grad_norm"],
-            #     train_result["loss"],
-            #     train_epoch_symbol_accuracy,
-            #     train_epoch_sentence_accuracy,
-            #     train_epoch_wer,
-            #     validation_result["loss"],
-            #     validation_epoch_symbol_accuracy,
-            #     validation_epoch_sentence_accuracy,
-            #     validation_epoch_wer,
-            #     model,
-            # )
+            write_tensorboard(
+                writer,
+                start_epoch + epoch + 1,
+                train_result["grad_norm"],
+                train_result["loss"],
+                train_epoch_symbol_accuracy,
+                train_epoch_sentence_accuracy,
+                train_epoch_wer,
+                validation_result["loss"],
+                validation_epoch_symbol_accuracy,
+                validation_epoch_sentence_accuracy,
+                validation_epoch_wer,
+                model,
+            )
+        wandb.log({"train_loss": train_result["loss"]})
+        wandb.log({"train_symbol_acc": train_epoch_symbol_accuracy})
+        wandb.log({"train_sentence_acc": train_epoch_sentence_accuracy})
+        wandb.log({"train_wer": train_epoch_wer})
+        wandb.log({"train_lr": epoch_lr})
 
+        wandb.log({"valid_loss": validation_result["loss"]})
+        wandb.log({"valid_symbol_acc": validation_epoch_symbol_accuracy})
+        wandb.log({"valid_sentence_acc": validation_epoch_sentence_accuracy})
+        wandb.log({"valid_wer": validation_epoch_wer})
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -456,9 +468,10 @@ if __name__ == "__main__":
         "-c",
         "--config_file",
         dest="config_file",
-        default="configs/Attention.yaml",
+        default="configs/SATRN.yaml",
         type=str,
         help="Path of configuration file",
     )
     parser = parser.parse_args()
+    wandb.init(entity='pstage4_ocr', project='jo_member', name='run1')
     main(parser.config_file)
